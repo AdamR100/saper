@@ -1,0 +1,232 @@
+package minesweeper
+class Field(val line: Int, val place: Int, var number: Int = 0) {
+    var mine: Boolean = false
+    var mark = false
+    var explored = false
+        /*set(value) {
+            if(this.number == 0) {
+                explorer(board)
+            }
+            field = value
+        }
+
+         */
+}
+
+
+fun main() {
+    print("How many mines do you want on the field?")
+    val numberOfMines = readln().toInt()
+    val board = mutableListOf(
+            mutableListOf(Field(0, 0), Field(0, 1), Field(0, 2), Field(0, 3), Field(0, 4), Field(0, 5), Field(0, 6), Field(0, 7), Field(0, 8)),
+            mutableListOf(Field(1, 0), Field(1, 1), Field(1, 2), Field(1, 3), Field(1, 4), Field(1, 5), Field(1, 6), Field(1, 7), Field(1, 8)),
+            mutableListOf(Field(2, 0), Field(2, 1), Field(2, 2), Field(2, 3), Field(2, 4), Field(2, 5), Field(2, 6), Field(2, 7), Field(2, 8)),
+            mutableListOf(Field(3, 0), Field(3, 1), Field(3, 2), Field(3, 3), Field(3, 4), Field(3, 5), Field(3, 6), Field(3, 7), Field(3, 8)),
+            mutableListOf(Field(4, 0), Field(4, 1), Field(4, 2), Field(4, 3), Field(4, 4), Field(4, 5), Field(4, 6), Field(4, 7), Field(4, 8)),
+            mutableListOf(Field(5, 0), Field(5, 1), Field(5, 2), Field(5, 3), Field(5, 4), Field(5, 5), Field(5, 6), Field(5, 7), Field(5, 8)),
+            mutableListOf(Field(6, 0), Field(6, 1), Field(6, 2), Field(6, 3), Field(6, 4), Field(6, 5), Field(6, 6), Field(6, 7), Field(6, 8)),
+            mutableListOf(Field(7, 0), Field(7, 1), Field(7, 2), Field(7, 3), Field(7, 4), Field(7, 5), Field(7, 6), Field(7, 7), Field(7, 8)),
+            mutableListOf(Field(8, 0), Field(8, 1), Field(8, 2), Field(8, 3), Field(8, 4), Field(8, 5), Field(8, 6), Field(8, 7), Field(8, 8))
+    )
+    mineGenerator(board, numberOfMines)
+    numbersGenerator(board)
+    printer(board)
+    marker(board, numberOfMines)
+}
+
+fun explorer(board: MutableList<MutableList<Field>>) {
+    var boolean = false
+
+    repeat(19) {
+        for (i in board) {
+            for (x in i) {
+                if (x.explored && x.number == 0 && !x.mine) {
+                    board[board.indexOf(i)][board[board.indexOf(i)].indexOf(x)].explored = true
+                    if (board.indexOf(i) + 1 <= 8) {
+                        board[board.indexOf(i) + 1][board[board.indexOf(i)].indexOf(x)].explored = true
+                        if (board[board.indexOf(i)].indexOf(x) - 1 >= 0) {
+                            board[board.indexOf(i) + 1][board[board.indexOf(i)].indexOf(x) - 1].explored = true
+                        }
+                        if (board[board.indexOf(i)].indexOf(x) + 1 <= 8) {
+                            board[board.indexOf(i) + 1][board[board.indexOf(i)].indexOf(x) + 1].explored = true
+                        }
+                    }
+                    if (board.indexOf(i) - 1 >= 0) {
+                        board[board.indexOf(i) - 1][board[board.indexOf(i)].indexOf(x)].explored = true
+                        if (board[board.indexOf(i)].indexOf(x) - 1 >= 0) {
+                            board[board.indexOf(i) - 1][board[board.indexOf(i)].indexOf(x) - 1].explored = true
+                        }
+                        if (board[board.indexOf(i)].indexOf(x) + 1 <= 8) {
+                            board[board.indexOf(i) - 1][board[board.indexOf(i)].indexOf(x) + 1].explored = true
+                        }
+                    }
+                    if (board[board.indexOf(i)].indexOf(x) + 1 <= 8) {
+                        board[board.indexOf(i)][board[board.indexOf(i)].indexOf(x) + 1].explored = true
+                    }
+                    if (board[board.indexOf(i)].indexOf(x) - 1 >= 0) {
+                        board[board.indexOf(i)][board[board.indexOf(i)].indexOf(x) - 1].explored = true
+                    }
+                }
+            }
+        }
+    }
+
+}
+
+fun exploreWinChecker(board: MutableList<MutableList<Field>>, numberOfMines: Int): Boolean {
+    var exploredNumber = 0
+    for(i in board) {
+        for(x in i) {
+            if(x.explored) {
+                exploredNumber++
+            }
+        }
+    }
+    if(exploredNumber + numberOfMines == 81) return true
+    return false
+}
+
+fun markWinChecker(board: MutableList<MutableList<Field>>, numberOfMines: Int): Boolean {
+    var niceShots = 0
+    for(i in board) {
+        for(x in i) {
+            if(x.mark && !x.mine) return false
+            if(x.mine && x.mark) {
+                niceShots++
+            }
+        }
+    }
+    return niceShots == numberOfMines
+}
+
+fun marker(board: MutableList<MutableList<Field>>, numberOfMines: Int) {
+    print("Set/unset mine marks or claim a cell as free:")
+    val (markx, marky, actionType) = readln().split(" ").map {
+        it
+    }
+    val markX = markx.toInt() - 1
+    val markY = marky.toInt() - 1
+    if (actionType == "mine") {
+        board[markY][markX].mark = !board[markY][markX].mark
+        printer(board)
+    } else {
+        board[markY][markX].explored = true
+        if(board[markY][markX].mine) {
+            printer(board, true)
+        } else {
+            explorer(board)
+            printer(board)
+        }
+    }
+
+    if(actionType == "free" && board[markY][markX].mine) println("You stepped on a mine and failed!")
+    else if(markWinChecker(board, numberOfMines) || exploreWinChecker(board, numberOfMines)) println("Congratulations! You found all the mines!")
+    else marker(board, numberOfMines)
+}
+
+fun printer(board: MutableList<MutableList<Field>>, boom: Boolean = false) {
+    println()
+    println(" │123456789│")
+    println("—│—————————│")
+    for(x in board) {
+        print(x[0].line + 1)
+        print('│')
+        for (i in x) {
+            when {
+                (i.mine && boom) -> print('X')
+                (i.number == 0 && i.explored) -> print('/')
+                (i.explored) -> print(i.number)
+                (i.mark) -> print('*')
+                else -> print('.')
+            }
+        }
+        print('|')
+        println()
+        if(x[0].line == 8) println("—│—————————│")
+    }
+}
+
+fun mineGenerator(board: MutableList<MutableList<Field>>, numberOfMines: Int) {
+    val fieldsList = mutableListOf<Field>()
+    for(x in board) {
+        for(i in x) {
+            fieldsList.add(i)
+        }
+    }
+    repeat(numberOfMines) {
+        var randomElement = fieldsList.random()
+        fieldsList.remove(randomElement)
+        board[randomElement.line][randomElement.place].mine = true
+    }
+}
+
+fun numbersGenerator(board: MutableList<MutableList<Field>>) {
+    for (x in board) {
+        for (i in x) {
+            if (i.mine) {
+                when (i.line) {
+                    0 -> {
+                        if (i.place == 0) {
+                            board[i.line][i.place + 1].number = board[i.line][i.place + 1].number + 1
+                            board[i.line + 1][i.place].number = board[i.line + 1][i.place].number + 1
+                            board[i.line + 1][i.place + 1].number = board[i.line + 1][i.place + 1].number + 1
+                        } else if (i.place == 8) {
+                            board[i.line][i.place - 1].number = board[i.line][i.place - 1].number + 1
+                            board[i.line + 1][i.place].number = board[i.line + 1][i.place].number + 1
+                            board[i.line + 1][i.place - 1].number = board[i.line + 1][i.place - 1].number + 1
+                        } else {
+                            board[i.line][i.place + 1].number = board[i.line][i.place + 1].number + 1
+                            board[i.line + 1][i.place].number = board[i.line + 1][i.place].number + 1
+                            board[i.line + 1][i.place + 1].number = board[i.line + 1][i.place + 1].number + 1
+                            board[i.line][i.place - 1].number = board[i.line][i.place - 1].number + 1
+                            board[i.line + 1][i.place - 1].number = board[i.line + 1][i.place - 1].number + 1
+                        }
+                    }
+
+                    8 -> {
+                        if (i.place == 0) {
+                            board[i.line][i.place + 1].number = board[i.line][i.place + 1].number + 1
+                            board[i.line - 1][i.place].number = board[i.line - 1][i.place].number + 1
+                            board[i.line - 1][i.place + 1].number = board[i.line - 1][i.place + 1].number + 1
+                        } else if (i.place == 8) {
+                            board[i.line][i.place - 1].number = board[i.line][i.place - 1].number + 1
+                            board[i.line - 1][i.place].number = board[i.line - 1][i.place].number + 1
+                            board[i.line - 1][i.place - 1].number = board[i.line - 1][i.place - 1].number + 1
+                        } else {
+                            board[i.line][i.place + 1].number = board[i.line][i.place + 1].number + 1
+                            board[i.line - 1][i.place].number = board[i.line - 1][i.place].number + 1
+                            board[i.line - 1][i.place + 1].number = board[i.line - 1][i.place + 1].number + 1
+                            board[i.line][i.place - 1].number = board[i.line][i.place - 1].number + 1
+                            board[i.line - 1][i.place - 1].number = board[i.line - 1][i.place - 1].number + 1
+                        }
+                    }
+
+                    else -> {
+                        if (i.place == 0) {
+                            board[i.line][i.place + 1].number = board[i.line][i.place + 1].number + 1
+                            board[i.line + 1][i.place].number = board[i.line + 1][i.place].number + 1
+                            board[i.line + 1][i.place + 1].number = board[i.line + 1][i.place + 1].number + 1
+                            board[i.line - 1][i.place].number = board[i.line - 1][i.place].number + 1
+                            board[i.line - 1][i.place + 1].number = board[i.line - 1][i.place + 1].number + 1
+                        } else if(i.place == 8) {
+                            board[i.line][i.place - 1].number = board[i.line][i.place - 1].number + 1
+                            board[i.line + 1][i.place].number = board[i.line + 1][i.place].number + 1
+                            board[i.line + 1][i.place - 1].number = board[i.line + 1][i.place - 1].number + 1
+                            board[i.line - 1][i.place].number = board[i.line - 1][i.place].number + 1
+                            board[i.line - 1][i.place - 1].number = board[i.line - 1][i.place - 1].number + 1
+                        } else {
+                            board[i.line][i.place + 1].number = board[i.line][i.place + 1].number + 1
+                            board[i.line - 1][i.place].number = board[i.line - 1][i.place].number + 1
+                            board[i.line - 1][i.place + 1].number = board[i.line - 1][i.place + 1].number + 1
+                            board[i.line][i.place - 1].number = board[i.line][i.place - 1].number + 1
+                            board[i.line - 1][i.place - 1].number = board[i.line - 1][i.place - 1].number + 1
+                            board[i.line + 1][i.place].number = board[i.line + 1][i.place].number + 1
+                            board[i.line + 1][i.place + 1].number = board[i.line + 1][i.place + 1].number + 1
+                            board[i.line + 1][i.place - 1].number = board[i.line + 1][i.place - 1].number + 1
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
